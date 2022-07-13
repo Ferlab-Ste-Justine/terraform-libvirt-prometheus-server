@@ -165,13 +165,13 @@ variable "prometheus" {
   description = "Prometheus configurations"
   type = object({
       web = object({
-          external_url = string
-          max_connections = number
-          read_timeout = string
+        external_url = string
+        max_connections = number
+        read_timeout = string
       })
       retention = object({
-          time = string
-          size = string
+        time = string
+        size = string
       })
   })
 }

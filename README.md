@@ -12,8 +12,6 @@ If you don't have a strategy in place to upload configuration files in etcd, con
 
 Otherwise, the module uses the following project to update its configuration: https://github.com/Ferlab-Ste-Justine/configurations-auto-updater
 
-See the following terraform module that uploads very basic zonefiles in etcd: https://github.com/Ferlab-Ste-Justine/etcd-zonefile
-
 # Dependencies
 
 The server expect an etcd server running with the v3 api.
@@ -76,8 +74,8 @@ The module supports libvirt networks and macvtap (bridge mode).
   - **makestep**: An object containing remedial instructions if the clock of the vm is significantly out of sync at startup. It is an object containing two properties, **threshold** and **limit** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#makestep)
 - **fluentd**: Optional fluend configuration to securely route logs to a fluend node using the forward plugin. It has the following keys:
   - **enabled**: If set the false (the default), fluentd will not be installed.
-  - **prometheus_tag**: Tag to assign to logs coming from coredns
-  - **configurations_updater_tag**: Tag to assign to logs coming from the coredns zonefiles updater
+  - **prometheus_tag**: Tag to assign to logs coming from prometheus
+  - **configurations_updater_tag**: Tag to assign to logs coming from the prometheus configurations updater
   - **node_exporter_tag** Tag to assign to logs coming from the prometheus node exporter
   - **forward**: Configuration for the forward plugin that will talk to the external fluend node. It has the following keys:
     - **domain**: Ip or domain name of the remote fluend node.
