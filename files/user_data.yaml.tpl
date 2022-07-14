@@ -87,7 +87,7 @@ write_files:
     owner: root:root
     permissions: "0444"
     content: |
-      ${indent(6, fluentd.forward_ca_cert)}
+      ${indent(6, fluentd.forward.ca_cert)}
 %{ endif ~}
   #Prometheus systemd configuration
   - path: /etc/systemd/system/prometheus.service
@@ -115,7 +115,7 @@ write_files:
           --web.read-timeout=${prometheus.web.read_timeout} \
           --storage.tsdb.path=/var/lib/prometheus/data \
           --storage.tsdb.retention.time=${prometheus.retention.time} \
-          --storage.tsdb.retention.time=${prometheus.retention.size}
+          --storage.tsdb.retention.size=${prometheus.retention.size}
       ExecReload=/bin/kill -HUP $MAINPID
 
       [Install]
@@ -148,15 +148,20 @@ write_files:
 %{ endif ~}
   - path: /etc/configurations-auto-updater/configs.json
     owner: root:root
-    permissions: "0444"
+    permissions: "0440"
     content: |
       {
           "FilesystemPath": "/etc/prometheus/configs/",
           "EtcdEndpoints": "${join(",", etcd_endpoints)}",
           "CaCertPath": "/etc/etcd/ca.crt",
           "UserAuth": {
+%{ if etcd_client_username == "" ~}
               "CertPath": "/etc/etcd/client.crt",
               "KeyPath": "/etc/etcd/client.key"
+%{ else ~}
+              "Username": "${etcd_client_username}",
+              "Password": "${etcd_client_password}"
+%{ endif ~}
           },
           "EtcdKeyPrefix": "${etcd_key_prefix}",
           "ConnectionTimeout": 5,
@@ -231,6 +236,7 @@ runcmd:
   - rm -rf /tmp/configurations-auto-updater
   - rm -f /tmp/configurations-auto-updater_0.2.0_linux_amd64.tar.gz
   - chown -R prometheus:prometheus /etc/etcd
+  - chown -R prometheus:prometheus /etc/configurations-auto-updater
   - mkdir /etc/prometheus
   - chown prometheus:prometheus /etc/prometheus
   - systemctl enable configurations-auto-updater

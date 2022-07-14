@@ -46,9 +46,9 @@ data "template_cloudinit_config" "user_data" {
         etcd_key_prefix = var.etcd.key_prefix
         prometheus = {
           web = {
-            external_url = var.prometheus.external_url
-            max_connections = ? var.prometheus.max_connections > 0 ? var.prometheus.max_connections : 512
-            read_timeout = ? var.prometheus.read_timeout != "" ? var.prometheus.read_timeout : "5m"
+            external_url = var.prometheus.web.external_url
+            max_connections = var.prometheus.web.max_connections > 0 ? var.prometheus.web.max_connections : 512
+            read_timeout = var.prometheus.web.read_timeout != "" ? var.prometheus.web.read_timeout : "5m"
           }
           retention = {
             time = var.prometheus.retention.time != "" ? var.prometheus.retention.time : "15d"
