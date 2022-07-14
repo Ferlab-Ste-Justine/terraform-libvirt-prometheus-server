@@ -13,6 +13,7 @@ users:
   - name: prometheus
     system: true
     lock_passwd: true
+    sudo: "ALL= NOPASSWD: /bin/systemctl reload prometheus.service"
   - name: ${ssh_admin_user}
     ssh_authorized_keys:
       - "${ssh_admin_public_key}"
@@ -127,7 +128,7 @@ write_files:
       #!/bin/sh
       PROMETHEUS_STATUS=$(systemctl is-active prometheus.service)
       if [ $PROMETHEUS_STATUS = "active" ]; then
-        systemctl reload prometheus.service
+        sudo systemctl reload prometheus.service
       fi
   - path: /etc/etcd/ca.crt
     owner: root:root
