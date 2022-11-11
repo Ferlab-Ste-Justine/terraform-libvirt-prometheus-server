@@ -243,15 +243,15 @@ runcmd:
   - systemctl enable configurations-auto-updater
   - systemctl start configurations-auto-updater
   #Setup prometheus service
-  - curl -L https://github.com/prometheus/prometheus/releases/download/v2.36.2/prometheus-2.36.2.linux-amd64.tar.gz --output prometheus.tar.gz
+  - curl -L https://github.com/prometheus/prometheus/releases/download/v2.40.1/prometheus-2.40.1.linux-amd64.tar.gz --output prometheus.tar.gz
   - mkdir -p /tmp/prometheus
   - tar zxvf prometheus.tar.gz -C /tmp/prometheus
-  - cp -r /tmp/prometheus/prometheus-2.36.2.linux-amd64/console_libraries /etc/prometheus/console_libraries
+  - cp -r /tmp/prometheus/prometheus-2.40.1.linux-amd64/console_libraries /etc/prometheus/console_libraries
   - chown -R prometheus:prometheus /etc/prometheus/console_libraries
-  - cp -r /tmp/prometheus/prometheus-2.36.2.linux-amd64/consoles /etc/prometheus/consoles
+  - cp -r /tmp/prometheus/prometheus-2.40.1.linux-amd64/consoles /etc/prometheus/consoles
   - chown -R prometheus:prometheus /etc/prometheus/consoles
-  - cp /tmp/prometheus/prometheus-2.36.2.linux-amd64/prometheus /usr/local/bin/prometheus
-  - cp /tmp/prometheus/prometheus-2.36.2.linux-amd64/promtool /usr/local/bin/promtool
+  - cp /tmp/prometheus/prometheus-2.40.1.linux-amd64/prometheus /usr/local/bin/prometheus
+  - cp /tmp/prometheus/prometheus-2.40.1.linux-amd64/promtool /usr/local/bin/promtool
   - rm -r /tmp/prometheus
   - rm prometheus.tar.gz
   - mkdir -p /var/lib/prometheus/data
