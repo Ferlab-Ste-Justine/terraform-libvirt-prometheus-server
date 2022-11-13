@@ -175,3 +175,9 @@ variable "prometheus" {
       })
   })
 }
+
+variable "install_dependencies" {
+  description = "Whether to install all dependencies in cloud-init"
+  type = bool
+  default = true
+}

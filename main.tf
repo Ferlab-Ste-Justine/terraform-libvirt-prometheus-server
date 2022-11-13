@@ -61,6 +61,7 @@ data "template_cloudinit_config" "user_data" {
         chrony = var.chrony
         fluentd = var.fluentd
         fluentd_conf = local.fluentd_conf
+        install_dependencies = var.install_dependencies
       }
     )
   }

@@ -7,6 +7,7 @@ chpasswd:
 %{ endif ~}
 users:
   - default
+%{ if install_dependencies ~}
   - name: node-exporter
     system: true
     lock_passwd: true
@@ -14,10 +15,18 @@ users:
     system: true
     lock_passwd: true
     sudo: "ALL= NOPASSWD: /bin/systemctl reload prometheus.service"
+%{ endif ~}
   - name: ${ssh_admin_user}
     ssh_authorized_keys:
       - "${ssh_admin_public_key}"
 write_files:
+%{ if !install_dependencies ~}
+  - path: /etc/sudoers.d/prometheus
+    owner: root:root
+    permissions: "0440"
+    content: |
+      prometheus ALL= NOPASSWD: /bin/systemctl reload prometheus.service
+%{ endif ~}
   #Chrony config
 %{ if chrony.enabled ~}
   - path: /opt/chrony.conf
@@ -195,6 +204,7 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 packages:
+%{ if install_dependencies ~}
   - curl
   - unzip
 %{ if fluentd.enabled ~}
@@ -204,6 +214,7 @@ packages:
 %{ if chrony.enabled ~}
   - chrony
 %{ endif ~}
+%{ endif ~}
 runcmd:
   #Finalize Chrony Setup
 %{ if chrony.enabled ~}
@@ -211,12 +222,14 @@ runcmd:
   - systemctl restart chrony.service 
 %{ endif ~}
   #Install prometheus node exporter as a binary managed as a systemd service
+%{ if install_dependencies ~}
   - wget -O /opt/node_exporter.tar.gz https://github.com/prometheus/node_exporter/releases/download/v1.3.0/node_exporter-1.3.0.linux-amd64.tar.gz
   - mkdir -p /opt/node_exporter
   - tar zxvf /opt/node_exporter.tar.gz -C /opt/node_exporter
   - cp /opt/node_exporter/node_exporter-1.3.0.linux-amd64/node_exporter /usr/local/bin/node_exporter
   - chown node-exporter:node-exporter /usr/local/bin/node_exporter
   - rm -r /opt/node_exporter && rm /opt/node_exporter.tar.gz
+%{ endif ~}
   - systemctl enable node-exporter
   - systemctl start node-exporter
   #Fluentd setup
@@ -224,25 +237,30 @@ runcmd:
   - mkdir -p /opt/fluentd-state
   - chown root:root /opt/fluentd-state
   - chmod 0700 /opt/fluentd-state
+%{ if install_dependencies ~}
   - gem install fluentd
   - gem install fluent-plugin-systemd -v 1.0.5
+%{ endif ~}
   - systemctl enable fluentd.service
   - systemctl start fluentd.service
 %{ endif ~}
   #Setup configurations auto updater service
-  - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.2.0/configurations-auto-updater_0.2.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.2.0_linux_amd64.tar.gz
+%{ if install_dependencies ~}
+  - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.2.1/configurations-auto-updater_0.2.1_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.2.1_linux_amd64.tar.gz
   - mkdir -p /tmp/configurations-auto-updater
-  - tar zxvf /tmp/configurations-auto-updater_0.2.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
+  - tar zxvf /tmp/configurations-auto-updater_0.2.1_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
   - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/configurations-auto-updater
   - rm -rf /tmp/configurations-auto-updater
-  - rm -f /tmp/configurations-auto-updater_0.2.0_linux_amd64.tar.gz
-  - chown -R prometheus:prometheus /etc/etcd
-  - chown -R prometheus:prometheus /etc/configurations-auto-updater
+  - rm -f /tmp/configurations-auto-updater_0.2.1_linux_amd64.tar.gz
   - mkdir /etc/prometheus
   - chown prometheus:prometheus /etc/prometheus
+%{ endif ~}
+  - chown -R prometheus:prometheus /etc/etcd
+  - chown -R prometheus:prometheus /etc/configurations-auto-updater
   - systemctl enable configurations-auto-updater
   - systemctl start configurations-auto-updater
   #Setup prometheus service
+%{ if install_dependencies ~}
   - curl -L https://github.com/prometheus/prometheus/releases/download/v2.40.1/prometheus-2.40.1.linux-amd64.tar.gz --output prometheus.tar.gz
   - mkdir -p /tmp/prometheus
   - tar zxvf prometheus.tar.gz -C /tmp/prometheus
@@ -254,6 +272,7 @@ runcmd:
   - cp /tmp/prometheus/prometheus-2.40.1.linux-amd64/promtool /usr/local/bin/promtool
   - rm -r /tmp/prometheus
   - rm prometheus.tar.gz
+%{ endif ~}
   - mkdir -p /var/lib/prometheus/data
   - chown -R prometheus:prometheus /var/lib/prometheus
   - systemctl enable prometheus

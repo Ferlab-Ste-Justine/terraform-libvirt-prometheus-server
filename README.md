@@ -22,6 +22,8 @@ See the following project to setup a secure etcd cluster in kvm if you don't alr
 
 A **prometheus.yml** configuration key is expected at the root of the keys prefix containing your configurations. You can configure other supporting configuration files (such as rules) as you wish.
 
+This module also supports pre-built images. See the following for the expectations about the images: https://github.com/Ferlab-Ste-Justine/vm-image-builds/blob/main/builds/kvm-prometheus/ansible/playbook.yml 
+
 # Supported Networking
 
 The module supports libvirt networks and macvtap (bridge mode).
@@ -86,3 +88,4 @@ The module supports libvirt networks and macvtap (bridge mode).
   - **buffer**: Configuration for the buffering of outgoing fluentd traffic
     - **customized**: Set to false to use the default buffering configurations. If you wish to customize it, set this to true.
     - **custom_value**: Custom buffering configuration to provide that will override the default one. Should be valid fluentd configuration syntax, including the opening and closing ```<buffer>``` tags.
+- **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
