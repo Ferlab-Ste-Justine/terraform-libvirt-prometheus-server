@@ -5,6 +5,8 @@ chpasswd:
      ${ssh_admin_user}:${admin_user_password}
   expire: False
 %{ endif ~}
+preserve_hostname: false
+hostname: ${node_name}
 users:
   - default
 %{ if install_dependencies ~}

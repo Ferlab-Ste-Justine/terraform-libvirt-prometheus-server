@@ -55,6 +55,7 @@ data "template_cloudinit_config" "user_data" {
             size = var.prometheus.retention.size != "" ? var.prometheus.retention.size : "0"
           }
         }
+        node_name = var.name
         ssh_admin_user = var.ssh_admin_user
         admin_user_password = var.admin_user_password
         ssh_admin_public_key = var.ssh_admin_public_key
