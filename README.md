@@ -77,7 +77,7 @@ The module supports libvirt networks and macvtap (bridge mode).
 - **fluentd**: Optional fluend configuration to securely route logs to a fluend node using the forward plugin. It has the following keys:
   - **enabled**: If set the false (the default), fluentd will not be installed.
   - **prometheus_tag**: Tag to assign to logs coming from prometheus
-  - **configurations_updater_tag**: Tag to assign to logs coming from the prometheus configurations updater
+  - **prometheus_updater_tag**: Tag to assign to logs coming from the prometheus configurations updater
   - **node_exporter_tag** Tag to assign to logs coming from the prometheus node exporter
   - **forward**: Configuration for the forward plugin that will talk to the external fluend node. It has the following keys:
     - **domain**: Ip or domain name of the remote fluend node.

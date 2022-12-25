@@ -1,12 +1,6 @@
 locals {
   cloud_init_volume_name = var.cloud_init_volume_name == "" ? "${var.name}-cloud-init.iso" : var.cloud_init_volume_name
   bind_addresses = length(var.macvtap_interfaces) == 0 ? [var.libvirt_network.ip] : [for macvtap_interface in var.macvtap_interfaces: macvtap_interface.ip]
-  network_config = templatefile(
-    "${path.module}/files/network_config.yaml.tpl", 
-    {
-      macvtap_interfaces = var.macvtap_interfaces
-    }
-  )
   network_interfaces = length(var.macvtap_interfaces) == 0 ? [{
     network_id = var.libvirt_network.network_id
     macvtap = null
@@ -20,58 +14,115 @@ locals {
     mac = macvtap_interface.mac
     hostname = null
   }]
-  fluentd_conf = templatefile(
-    "${path.module}/files/fluentd.conf.tpl", 
-    {
-      fluentd = var.fluentd
-      fluentd_buffer_conf = var.fluentd.buffer.customized ? var.fluentd.buffer.custom_value : file("${path.module}/files/fluentd_buffer.conf")
-    }
+}
+
+module "network_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=main"
+  network_interfaces = var.macvtap_interfaces
+}
+
+module "prometheus_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus?ref=main"
+  install_dependencies = var.install_dependencies
+  etcd = var.etcd
+  prometheus = var.prometheus
+}
+
+module "prometheus_node_exporter_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=main"
+  install_dependencies = var.install_dependencies
+}
+
+module "chrony_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=main"
+  install_dependencies = var.install_dependencies
+  chrony = {
+    servers  = var.chrony.servers
+    pools    = var.chrony.pools
+    makestep = var.chrony.makestep
+  }
+}
+
+module "fluentd_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluentd?ref=main"
+  install_dependencies = var.install_dependencies
+  fluentd = {
+    docker_services = []
+    systemd_services = [
+      {
+        tag     = var.fluentd.prometheus_tag
+        service = "prometheus"
+      },
+      {
+        tag     = var.fluentd.prometheus_updater_tag
+        service = "prometheus-auto-updater"
+      },
+      {
+        tag     = var.fluentd.node_exporter_tag
+        service = "node-exporter"
+      }
+    ]
+    forward = var.fluentd.forward,
+    buffer = var.fluentd.buffer
+  }
+}
+
+locals {
+  cloudinit_templates = concat([
+      {
+        filename     = "base.cfg"
+        content_type = "text/cloud-config"
+        content = templatefile(
+          "${path.module}/files/user_data.yaml.tpl", 
+          {
+            hostname = var.name
+            ssh_admin_public_key = var.ssh_admin_public_key
+            ssh_admin_user = var.ssh_admin_user
+            admin_user_password = var.admin_user_password
+          }
+        )
+      },
+      {
+        filename     = "prometheus.cfg"
+        content_type = "text/cloud-config"
+        content      = module.prometheus_configs.configuration
+      },
+      {
+        filename     = "node_exporter.cfg"
+        content_type = "text/cloud-config"
+        content      = module.prometheus_node_exporter_configs.configuration
+      }
+    ],
+    var.chrony.enabled ? [{
+      filename     = "chrony.cfg"
+      content_type = "text/cloud-config"
+      content      = module.chrony_configs.configuration
+    }] : [],
+    var.fluentd.enabled ? [{
+      filename     = "fluentd.cfg"
+      content_type = "text/cloud-config"
+      content      = module.fluentd_configs.configuration
+    }] : [],
   )
 }
 
 data "template_cloudinit_config" "user_data" {
   gzip = false
   base64_encode = false
-  part {
-    content_type = "text/cloud-config"
-    content = templatefile(
-      "${path.module}/files/user_data.yaml.tpl", 
-      {
-        etcd_ca_certificate = var.etcd.ca_certificate
-        etcd_client_certificate = var.etcd.client.certificate
-        etcd_client_key = var.etcd.client.key
-        etcd_client_username = var.etcd.client.username
-        etcd_client_password = var.etcd.client.password
-        etcd_endpoints = var.etcd.endpoints
-        etcd_key_prefix = var.etcd.key_prefix
-        prometheus = {
-          web = {
-            external_url = var.prometheus.web.external_url
-            max_connections = var.prometheus.web.max_connections > 0 ? var.prometheus.web.max_connections : 512
-            read_timeout = var.prometheus.web.read_timeout != "" ? var.prometheus.web.read_timeout : "5m"
-          }
-          retention = {
-            time = var.prometheus.retention.time != "" ? var.prometheus.retention.time : "15d"
-            size = var.prometheus.retention.size != "" ? var.prometheus.retention.size : "0"
-          }
-        }
-        node_name = var.name
-        ssh_admin_user = var.ssh_admin_user
-        admin_user_password = var.admin_user_password
-        ssh_admin_public_key = var.ssh_admin_public_key
-        chrony = var.chrony
-        fluentd = var.fluentd
-        fluentd_conf = local.fluentd_conf
-        install_dependencies = var.install_dependencies
-      }
-    )
+  dynamic "part" {
+    for_each = local.cloudinit_templates
+    content {
+      filename     = part.value["filename"]
+      content_type = part.value["content_type"]
+      content      = part.value["content"]
+    }
   }
 }
 
 resource "libvirt_cloudinit_disk" "prometheus" {
   name           = local.cloud_init_volume_name
   user_data      = data.template_cloudinit_config.user_data.rendered
-  network_config = length(var.macvtap_interfaces) > 0 ? local.network_config : null
+  network_config = length(var.macvtap_interfaces) > 0 ? module.network_configs.configuration : null
   pool           = var.cloud_init_volume_pool
 }
 
