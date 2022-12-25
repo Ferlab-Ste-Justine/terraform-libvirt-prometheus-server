@@ -128,7 +128,7 @@ variable "fluentd" {
   type = object({
     enabled = bool
     prometheus_tag = string
-    configurations_updater_tag = string
+    prometheus_updater_tag = string
     node_exporter_tag = string
     forward = object({
       domain = string
@@ -145,7 +145,7 @@ variable "fluentd" {
   default = {
     enabled = false
     prometheus_tag = ""
-    configurations_updater_tag = ""
+    prometheus_updater_tag = ""
     node_exporter_tag = ""
     forward = {
       domain = ""
