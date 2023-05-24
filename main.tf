@@ -2,12 +2,14 @@ locals {
   cloud_init_volume_name = var.cloud_init_volume_name == "" ? "${var.name}-cloud-init.iso" : var.cloud_init_volume_name
   bind_addresses = length(var.macvtap_interfaces) == 0 ? [var.libvirt_network.ip] : [for macvtap_interface in var.macvtap_interfaces: macvtap_interface.ip]
   network_interfaces = length(var.macvtap_interfaces) == 0 ? [{
-    network_id = var.libvirt_network.network_id
+    network_name = var.libvirt_network.network_name != "" ? var.libvirt_network.network_name : null
+    network_id = var.libvirt_network.network_id != "" ? var.libvirt_network.network_id : null
     macvtap = null
     addresses = [var.libvirt_network.ip]
     mac = var.libvirt_network.mac != "" ? var.libvirt_network.mac : null
     hostname = var.name
   }] : [for macvtap_interface in var.macvtap_interfaces: {
+    network_name = null
     network_id = null
     macvtap = macvtap_interface.interface
     addresses = null
@@ -18,7 +20,14 @@ locals {
 
 module "network_configs" {
   source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=main"
-  network_interfaces = var.macvtap_interfaces
+  network_interfaces = length(var.macvtap_interfaces) == 0 ? [{
+    ip = ""
+    gateway = ""
+    prefix_length = ""
+    interface = ""
+    mac = var.libvirt_network.mac
+    dns_servers = var.libvirt_network.dns_servers
+  }] : var.macvtap_interfaces
 }
 
 module "prometheus_configs" {
@@ -122,7 +131,7 @@ data "template_cloudinit_config" "user_data" {
 resource "libvirt_cloudinit_disk" "prometheus" {
   name           = local.cloud_init_volume_name
   user_data      = data.template_cloudinit_config.user_data.rendered
-  network_config = length(var.macvtap_interfaces) > 0 ? module.network_configs.configuration : null
+  network_config = module.network_configs.configuration
   pool           = var.cloud_init_volume_pool
 }
 
@@ -143,6 +152,7 @@ resource "libvirt_domain" "prometheus" {
   dynamic "network_interface" {
     for_each = local.network_interfaces
     content {
+      network_name = network_interface.value["network_name"]
       network_id = network_interface.value["network_id"]
       macvtap = network_interface.value["macvtap"]
       addresses = network_interface.value["addresses"]
