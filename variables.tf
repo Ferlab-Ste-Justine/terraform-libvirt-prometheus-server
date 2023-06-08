@@ -21,32 +21,35 @@ variable "volume_id" {
   type        = string
 }
 
-variable "libvirt_network" {
-  description = "Parameters of the libvirt network connection if a libvirt network is used. Has the following parameters: network_id, ip, mac"
-  type = object({
+variable "data_volume_id" {
+  description = "Id for an optional separate disk volume to attach to the vm on etcd's data path"
+  type        = string
+  default     = ""
+}
+
+variable "libvirt_networks" {
+  description = "Parameters of libvirt network connections if a libvirt networks are used."
+  type = list(object({
     network_name = string
     network_id = string
+    prefix_length = string
     ip = string
     mac = string
+    gateway = string
     dns_servers = list(string)
-  })
-  default = {
-    network_name = ""
-    network_id = ""
-    ip = ""
-    mac = ""
-    dns_servers = []
-  }
+  }))
+  default = []
 }
+
 variable "macvtap_interfaces" {
-  description = "List of macvtap interfaces. Mutually exclusive with the network_id, ip and mac fields. Each entry has the following keys: interface, prefix_length, ip, mac, gateway and dns_servers"
+  description = "List of macvtap interfaces."
   type        = list(object({
-    interface = string,
-    prefix_length = number,
-    ip = string,
-    mac = string,
-    gateway = string,
-    dns_servers = list(string),
+    interface     = string
+    prefix_length = string
+    ip            = string
+    mac           = string
+    gateway       = string
+    dns_servers   = list(string)
   }))
   default = []
 }

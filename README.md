@@ -36,13 +36,16 @@ The module supports libvirt networks and macvtap (bridge mode).
 - **vcpus**: Number of vcpus to assign to the vm. Defaults to 2.
 - **memory**: Amount of memory in MiB to assign to the vm. Defaults to 8192 (ie, 8 GiB).
 - **volume_id**: Id of the image volume to attach to the vm. A recent version of ubuntu is recommended as this is what this module has been validated against.
-- **libvirt_network**: Parameters to connect to a libvirt network if you opt for that instead of macvtap interfaces. In has the following keys:
-  - **ip**: Ip of the vm.
-  - **mac**: Mac address of the vm. If none is passed, a random one will be generated.
+- **data_volume_id**: Id for an optional separate disk volume to attach to the vm on prometheus' data path
+- **libvirt_network**: Parameters to connect to libvirt networks. Each entry has the following keys:
   - **network_id**: Id (ie, uuid) of the libvirt network to connect to (in which case **network_name** should be an empty string).
   - **network_name**: Name of the libvirt network to connect to (in which case **network_id** should be an empty string).
-  - **dns_servers**: Dns servers to use if you wish to override the default dns server provided by the libvirt network.
-- **macvtap_interfaces**: List of macvtap interfaces to connect the vm to if you opt for macvtap interfaces instead of a libvirt network. Each entry in the list is a map with the following keys:
+  - **ip**: Ip of interface connecting to the libvirt network.
+  - **mac**: Mac address of interface connecting to the libvirt network.
+  - **prefix_length**:  Length of the network prefix for the network the interface will be connected to. For a **192.168.1.0/24** for example, this would be **24**.
+  - **gateway**: Ip of the network's gateway. Usually the gateway the first assignable address of a libvirt's network.
+  - **dns_servers**: Dns servers to use. Usually the dns server is first assignable address of a libvirt's network.
+- **macvtap_interfaces**: List of macvtap interfaces to connect the vm to if you opt for macvtap interfaces. Each entry in the list is a map with the following keys:
   - **interface**: Host network interface that you plan to connect your macvtap interface with.
   - **prefix_length**: Length of the network prefix for the network the interface will be connected to. For a **192.168.1.0/24** for example, this would be 24.
   - **ip**: Ip associated with the macvtap interface. 
