@@ -22,7 +22,7 @@ locals {
 }
 
 module "network_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.10.0"
   network_interfaces = concat(
     [for idx, libvirt_network in var.libvirt_networks: {
       ip = libvirt_network.ip
@@ -43,20 +43,49 @@ module "network_configs" {
   )
 }
 
-module "prometheus_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus?ref=v0.8.0"
+module "prometheus_config_updater_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//configurations-auto-updater?ref=v0.10.0"
   install_dependencies = var.install_dependencies
-  etcd = var.etcd
+  filesystem = {
+    path = "/etc/prometheus/configs/"
+    files_permission = "0770"
+    directories_permission = "0770"
+  }
+  etcd = {
+    key_prefix = var.etcd.key_prefix
+    endpoints = var.etcd.endpoints
+    connection_timeout = "10s"
+    request_timeout = "10s"
+    retry_interval = "500ms"
+    retries = 10
+    auth = {
+      ca_certificate = var.etcd.ca_certificate
+      client_certificate = var.etcd.client.certificate
+      client_key = var.etcd.client.key
+      username = var.etcd.client.username
+      password = var.etcd.client.password
+    }
+  }
+  naming = {
+    binary = "prometheus-config-updater"
+    service = "prometheus-config-updater"
+  }
+  user = "prometheus"
+}
+
+module "prometheus_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus?ref=v0.10.0"
+  install_dependencies = var.install_dependencies
   prometheus = var.prometheus
 }
 
 module "prometheus_node_exporter_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.10.0"
   install_dependencies = var.install_dependencies
 }
 
 module "chrony_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.10.0"
   install_dependencies = var.install_dependencies
   chrony = {
     servers  = var.chrony.servers
@@ -66,7 +95,7 @@ module "chrony_configs" {
 }
 
 module "fluentbit_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=v0.10.0"
   install_dependencies = var.install_dependencies
   fluentbit = {
     metrics = var.fluentbit.metrics
@@ -90,7 +119,7 @@ module "fluentbit_configs" {
 }
 
 module "data_volume_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//data-volumes?ref=v0.8.0"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//data-volumes?ref=v0.10.0"
   volumes = [{
     label         = "prometheus_data"
     device        = "vdb"
@@ -114,6 +143,11 @@ locals {
             admin_user_password = var.admin_user_password
           }
         )
+      },
+      {
+        filename     = "prometheus_config_updater.cfg"
+        content_type = "text/cloud-config"
+        content      = module.prometheus_config_updater_configs.configuration
       },
       {
         filename     = "prometheus.cfg"
