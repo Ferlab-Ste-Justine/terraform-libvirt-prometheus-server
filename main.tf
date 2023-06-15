@@ -66,6 +66,10 @@ module "prometheus_config_updater_configs" {
       password = var.etcd.client.password
     }
   }
+  notification_command = {
+    command = ["/usr/local/bin/reload-prometheus-configs"]
+    retries = 30
+  }
   naming = {
     binary = "prometheus-config-updater"
     service = "prometheus-config-updater"
