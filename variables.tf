@@ -131,7 +131,6 @@ variable "chrony" {
 
 variable "fluentbit" {
   description = "Fluent-bit configuration"
-  sensitive = true
   type = object({
     enabled = bool
     prometheus_tag = string
@@ -147,18 +146,6 @@ variable "fluentbit" {
       hostname = string
       shared_key = string
       ca_cert = string
-    })
-    etcd = object({
-      enabled = bool
-      key_prefix = string
-      endpoints = list(string)
-      ca_certificate = string
-      client = object({
-        certificate = string
-        key = string
-        username = string
-        password = string
-      })
     })
   })
   default = {
@@ -177,18 +164,65 @@ variable "fluentbit" {
       shared_key = ""
       ca_cert = ""
     }
+  }
+}
+
+variable "fluentbit_dynamic_config" {
+  description = "Parameters for fluent-bit dynamic config if it is enabled"
+  type = object({
+    enabled = bool
+    source  = string
+    etcd    = object({
+      key_prefix     = string
+      endpoints      = list(string)
+      ca_certificate = string
+      client         = object({
+        certificate = string
+        key         = string
+        username    = string
+        password    = string
+      })
+    })
+    git     = object({
+      repo             = string
+      ref              = string
+      path             = string
+      trusted_gpg_keys = list(string)
+      auth             = object({
+        client_ssh_key         = string
+        server_ssh_fingerprint = string
+      })
+    })
+  })
+  default = {
+    enabled = false
+    source = "etcd"
     etcd = {
-      enabled = false
-      key_prefix = ""
-      endpoints = []
+      key_prefix     = ""
+      endpoints      = []
       ca_certificate = ""
-      client = {
+      client         = {
         certificate = ""
-        key = ""
-        username = ""
-        password = ""
+        key         = ""
+        username    = ""
+        password    = ""
       }
     }
+    git  = {
+      repo             = ""
+      ref              = ""
+      path             = ""
+      trusted_gpg_keys = []
+      auth             = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
+      }
+    }
+  }
+
+  validation {
+    condition     = contains(["etcd", "git"], var.fluentbit_dynamic_config.source)
+    error_message = "fluentbit_dynamic_config.source must be 'etcd' or 'git'."
   }
 }
 
@@ -205,6 +239,16 @@ variable "prometheus" {
         size = string
       })
   })
+}
+
+variable "prometheus_secrets" {
+  description = "Secrets to pass to prometheus to access exporters, alertmanagers and other external components it needs to interact with"
+  sensitive = true
+  type = list(object({
+    path  = string
+    content = string
+  }))
+  default = []
 }
 
 variable "install_dependencies" {
