@@ -30,13 +30,13 @@ variable "data_volume_id" {
 variable "libvirt_networks" {
   description = "Parameters of libvirt network connections if a libvirt networks are used."
   type = list(object({
-    network_name = string
-    network_id = string
+    network_name = optional(string, "")
+    network_id = optional(string, "")
     prefix_length = string
     ip = string
     mac = string
-    gateway = string
-    dns_servers = list(string)
+    gateway = optional(string, "")
+    dns_servers = optional(list(string), [])
   }))
   default = []
 }
@@ -48,8 +48,8 @@ variable "macvtap_interfaces" {
     prefix_length = string
     ip            = string
     mac           = string
-    gateway       = string
-    dns_servers   = list(string)
+    gateway       = optional(string, "")
+    dns_servers   = optional(list(string), [])
   }))
   default = []
 }
@@ -90,11 +90,12 @@ variable "etcd" {
     endpoints = list(string)
     ca_certificate = string
     client = object({
-      certificate = string
-      key = string
-      username = string
-      password = string
+      certificate = optional(string, "")
+      key = optional(string, "")
+      username = optional(string, "")
+      password = optional(string, "")
     })
+    vault_agent_secret_path = optional(string, "")
   })
 }
 
@@ -136,9 +137,12 @@ variable "fluentbit" {
     prometheus_tag = string
     prometheus_updater_tag = string
     node_exporter_tag = string
-    metrics = object({
+    metrics = optional(object({
       enabled = bool
       port    = number
+    }), {
+      enabled = false
+      port = 0
     })
     forward = object({
       domain = string
@@ -172,7 +176,7 @@ variable "fluentbit_dynamic_config" {
   type = object({
     enabled = bool
     source  = string
-    etcd    = object({
+    etcd    = optional(object({
       key_prefix     = string
       endpoints      = list(string)
       ca_certificate = string
@@ -182,8 +186,19 @@ variable "fluentbit_dynamic_config" {
         username    = string
         password    = string
       })
+      vault_agent_secret_path = optional(string, "")
+    }), {
+      key_prefix     = ""
+      endpoints      = []
+      ca_certificate = ""
+      client         = {
+        certificate = ""
+        key         = ""
+        username    = ""
+        password    = ""
+      }
     })
-    git     = object({
+    git     = optional(object({
       repo             = string
       ref              = string
       path             = string
@@ -192,6 +207,15 @@ variable "fluentbit_dynamic_config" {
         client_ssh_key         = string
         server_ssh_fingerprint = string
       })
+    }), {
+      repo             = ""
+      ref              = ""
+      path             = ""
+      trusted_gpg_keys = []
+      auth             = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
+      }
     })
   })
   default = {
@@ -223,6 +247,31 @@ variable "fluentbit_dynamic_config" {
   validation {
     condition     = contains(["etcd", "git"], var.fluentbit_dynamic_config.source)
     error_message = "fluentbit_dynamic_config.source must be 'etcd' or 'git'."
+  }
+}
+
+variable "vault_agent" {
+  type = object({
+    enabled = bool
+    auth_method = object({
+      config = object({
+        role_id   = string
+        secret_id = string
+      })
+    })
+    vault_address   = string
+    vault_ca_cert   = string
+  })
+  default = {
+    enabled = false
+    auth_method = {
+      config = {
+        role_id   = ""
+        secret_id = ""
+      }
+    }
+    vault_address = ""
+    vault_ca_cert = ""
   }
 }
 

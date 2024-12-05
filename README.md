@@ -66,6 +66,7 @@ The module supports libvirt networks and macvtap (bridge mode).
     - **key**: Client key if certificate authentication is used.
     - **username**: Client username if certificate authentication is used.
     - **password**: Client password if certificate authentication is used.
+  - **vault_agent_secret_path**: Optional vault secret path for an optional vault agent to renew the etcd client credentials. The secret in vault is expected to have the **certificate** and **key** keys if certificate authentication is used or the **username** and **password** keys if password authentication is used.
 - **prometheus**: Parameters to customise the behavior of prometheus. It has the following keys:
   - **web**: Object containing the following keys:
     - **external_url**: Value for the **--web.external-url** prometheus command line parameter. Has to be defined.
@@ -107,6 +108,7 @@ The module supports libvirt networks and macvtap (bridge mode).
       - **key**: Client private tls key to authentify with. To be used for certificate authentication.
       - **username**: Client's username. To be used for username/password authentication.
       - **password**: Client's password. To be used for username/password authentication.
+    - **vault_agent_secret_path**: Optional vault secret path for an optional vault agent to renew the etcd client credentials. The secret in vault is expected to have the **certificate** and **key** keys if certificate authentication is used or the **username** and **password** keys if password authentication is used.
   - **git**: Parameters to fetch fluent-bit configurations dynamically from an git repo. It has the following keys:
     - **repo**: Url of the git repository. It should have the ssh format.
     - **ref**: Git reference (usually branch) to checkout in the repository
