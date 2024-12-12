@@ -120,4 +120,12 @@ The module supports libvirt networks and macvtap (bridge mode).
 - **prometheus_secrets**: List of prometheus secrets (to access exporters, alertmanagers and other sattelite processes) to pass to the server's filesystem. The prometheus user that the prometheus process runs as will be made owner and given exclusive access to these files. Each element in the list takes the following keys:
   - **path**: Filesystem path where to store the secret on the server
   - **content**: Value of the secret
+- **vault_agent**: Parameters for the optional vault agent that will be used to manage the dynamic secrets in the vm.
+  - **enabled**: If set to true, a vault agent service will be setup and will run in the vm.
+  - **auth_method**: Auth method the vault agent will use to authenticate with vault. Currently, only approle is supported.
+    - **config**: Configuration parameters for the auth method.
+      - **role_id**: Id of the app role to us.
+      - **secret_id**: Authentication secret to use the app role.
+  - **vault_address**: Endpoint to use to talk to vault.
+  - **vault_ca_cert**: CA certificate to use to validate vault's certificate.
 - **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
