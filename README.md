@@ -66,6 +66,7 @@ The module supports libvirt networks and macvtap (bridge mode).
     - **key**: Client key if certificate authentication is used.
     - **username**: Client username if certificate authentication is used.
     - **password**: Client password if certificate authentication is used.
+  - **vault_agent_secret_path**: Optional vault secret path for an optional vault agent to renew the etcd client credentials. The secret in vault is expected to have the **certificate** and **key** keys if certificate authentication is used or the **username** and **password** keys if password authentication is used.
 - **prometheus**: Parameters to customise the behavior of prometheus. It has the following keys:
   - **web**: Object containing the following keys:
     - **external_url**: Value for the **--web.external-url** prometheus command line parameter. Has to be defined.
@@ -107,6 +108,7 @@ The module supports libvirt networks and macvtap (bridge mode).
       - **key**: Client private tls key to authentify with. To be used for certificate authentication.
       - **username**: Client's username. To be used for username/password authentication.
       - **password**: Client's password. To be used for username/password authentication.
+    - **vault_agent_secret_path**: Optional vault secret path for an optional vault agent to renew the etcd client credentials. The secret in vault is expected to have the **certificate** and **key** keys if certificate authentication is used or the **username** and **password** keys if password authentication is used.
   - **git**: Parameters to fetch fluent-bit configurations dynamically from an git repo. It has the following keys:
     - **repo**: Url of the git repository. It should have the ssh format.
     - **ref**: Git reference (usually branch) to checkout in the repository
@@ -118,4 +120,12 @@ The module supports libvirt networks and macvtap (bridge mode).
 - **prometheus_secrets**: List of prometheus secrets (to access exporters, alertmanagers and other sattelite processes) to pass to the server's filesystem. The prometheus user that the prometheus process runs as will be made owner and given exclusive access to these files. Each element in the list takes the following keys:
   - **path**: Filesystem path where to store the secret on the server
   - **content**: Value of the secret
+- **vault_agent**: Parameters for the optional vault agent that will be used to manage the dynamic secrets in the vm.
+  - **enabled**: If set to true, a vault agent service will be setup and will run in the vm.
+  - **auth_method**: Auth method the vault agent will use to authenticate with vault. Currently, only approle is supported.
+    - **config**: Configuration parameters for the auth method.
+      - **role_id**: Id of the app role to us.
+      - **secret_id**: Authentication secret to use the app role.
+  - **vault_address**: Endpoint to use to talk to vault.
+  - **vault_ca_cert**: CA certificate to use to validate vault's certificate.
 - **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
