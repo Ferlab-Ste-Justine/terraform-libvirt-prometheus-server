@@ -116,6 +116,7 @@ The module supports libvirt networks and macvtap (bridge mode).
     - **trusted_gpg_keys**: List of trusted gpp keys to verify the signature of the top commit. If an empty list is passed, the commit signature will not be verified.
     - **auth**: Authentication to the git server. It should have the following keys:
       - **client_ssh_key** Private client ssh key to authentication to the server.
+      - **client_ssh_user**: User to identify as with the git server. Can be left empty for many git providers, but some like Gitea require it.
       - **server_ssh_fingerprint**: Public ssh fingerprint of the server that will be used to authentify it.
 - **prometheus_secrets**: List of prometheus secrets (to access exporters, alertmanagers and other sattelite processes) to pass to the server's filesystem. The prometheus user that the prometheus process runs as will be made owner and given exclusive access to these files. Each element in the list takes the following keys:
   - **path**: Filesystem path where to store the secret on the server

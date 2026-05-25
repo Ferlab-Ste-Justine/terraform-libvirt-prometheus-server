@@ -205,6 +205,7 @@ variable "fluentbit_dynamic_config" {
       trusted_gpg_keys = list(string)
       auth             = object({
         client_ssh_key         = string
+        client_ssh_user        = optional(string, "")
         server_ssh_fingerprint = string
       })
     }), {
@@ -214,6 +215,7 @@ variable "fluentbit_dynamic_config" {
       trusted_gpg_keys = []
       auth             = {
         client_ssh_key         = ""
+        client_ssh_user        = ""
         server_ssh_fingerprint = ""
       }
     })
